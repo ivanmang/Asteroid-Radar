@@ -15,4 +15,6 @@ interface AsteroidDatabaseDao {
     @Update
     suspend fun update(asteroid: Asteroid)
 
+    @Query("SELECT * FROM asteroid_table ORDER BY close_approach_date DESC")
+    fun getAllNights(): LiveData<List<Asteroid>>
 }
