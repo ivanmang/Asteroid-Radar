@@ -23,12 +23,12 @@ import kotlin.collections.ArrayList
 
 class MainViewModel(val database: AsteroidDatabaseDao, application: Application) :
     AndroidViewModel(application) {
-    private var viewModelJob = Job()
+/*    private var viewModelJob = Job()
 
     override fun onCleared() {
         super.onCleared()
         viewModelJob.cancel()
-    }
+    }*/
 
     private val _response = MutableLiveData<ArrayList<Asteroid>>()
 
