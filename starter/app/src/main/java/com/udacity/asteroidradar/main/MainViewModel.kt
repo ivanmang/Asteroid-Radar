@@ -21,6 +21,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
+enum class AsteroidApiStatus {LOADING, ERROR, DONE}
+
 class MainViewModel(val database: AsteroidDatabaseDao, application: Application) :
     AndroidViewModel(application) {
 /*    private var viewModelJob = Job()
@@ -29,6 +31,13 @@ class MainViewModel(val database: AsteroidDatabaseDao, application: Application)
         super.onCleared()
         viewModelJob.cancel()
     }*/
+
+    // The internal MutableLiveData that stores the status of the most recent request
+    private val _status = MutableLiveData<AsteroidApiStatus>()
+
+    // The external immutable LiveData for the request status
+    val status: LiveData<AsteroidApiStatus>
+        get() = _status
 
     private val _response = MutableLiveData<ArrayList<Asteroid>>()
 
@@ -46,6 +55,7 @@ class MainViewModel(val database: AsteroidDatabaseDao, application: Application)
     private fun getAsteroidData() {
 
         viewModelScope.launch {
+            _status.value = AsteroidApiStatus.LOADING
             try {
                 val response = AsteroidApi.retrofitService.getAsteroid(
                     getToday(),
@@ -53,8 +63,10 @@ class MainViewModel(val database: AsteroidDatabaseDao, application: Application)
                     Constants.API_KEY
                 )
                 _response.value = parseAsteroidsJsonResult(JSONObject(response))
+                _status.value = AsteroidApiStatus.DONE
             } catch (e: Exception) {
-                throw e
+                _status.value = AsteroidApiStatus.ERROR
+                _response.value = ArrayList()
             }
         }
 
