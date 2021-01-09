@@ -50,6 +50,11 @@ class MainViewModel(val database: AsteroidDatabaseDao, application: Application)
     val image: LiveData<PictureOfDay>
         get() = _image
 
+    private val _navigateToSelectedAsteroid = MutableLiveData<Asteroid>()
+
+    val navigateToSelectedAsteroid : LiveData<Asteroid>
+        get() = _navigateToSelectedAsteroid
+
     private var asteroid = MutableLiveData<Asteroid?>()
 
     private var asteroids = database.getAllNights()
@@ -117,4 +122,12 @@ class MainViewModel(val database: AsteroidDatabaseDao, application: Application)
             //asteroids.value = getAsteroidsFromDatabase()
         }
     }*/
+
+    fun displayPropertyDetails(asteroid: Asteroid) {
+        _navigateToSelectedAsteroid.value = asteroid
+    }
+
+    fun displayPropertyDetailsComplete() {
+        _navigateToSelectedAsteroid.value = null
+    }
 }
