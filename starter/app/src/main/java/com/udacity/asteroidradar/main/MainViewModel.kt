@@ -10,40 +10,14 @@ import com.udacity.asteroidradar.Asteroid
 import com.udacity.asteroidradar.Constants
 import com.udacity.asteroidradar.PictureOfDay
 import com.udacity.asteroidradar.api.AsteroidApi
-import com.udacity.asteroidradar.api.parseAsteroidsJsonResult
-import com.udacity.asteroidradar.database.AsteroidDatabaseDao
-import kotlinx.coroutines.Job
+import com.udacity.asteroidradar.database.getDatabase
+import com.udacity.asteroidradar.repository.AsteroidRepository
 import kotlinx.coroutines.launch
-import org.json.JSONObject
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import java.text.SimpleDateFormat
-import java.util.*
-import kotlin.collections.ArrayList
 
 enum class AsteroidApiStatus {LOADING, ERROR, DONE}
 
-class MainViewModel(val database: AsteroidDatabaseDao, application: Application) :
+class MainViewModel(application: Application) :
     AndroidViewModel(application) {
-/*    private var viewModelJob = Job()
-
-    override fun onCleared() {
-        super.onCleared()
-        viewModelJob.cancel()
-    }*/
-
-    // The internal MutableLiveData that stores the status of the most recent request
-    private val _status = MutableLiveData<AsteroidApiStatus>()
-
-    // The external immutable LiveData for the request status
-    val status: LiveData<AsteroidApiStatus>
-        get() = _status
-
-    private val _response = MutableLiveData<ArrayList<Asteroid>>()
-
-    val response: LiveData<ArrayList<Asteroid>>
-        get() = _response
 
     private val _image = MutableLiveData<PictureOfDay>()
 
@@ -55,73 +29,43 @@ class MainViewModel(val database: AsteroidDatabaseDao, application: Application)
     val navigateToSelectedAsteroid : LiveData<Asteroid>
         get() = _navigateToSelectedAsteroid
 
-    private var asteroid = MutableLiveData<Asteroid?>()
+    private val database = getDatabase(application)
+    private val asteroidRepository = AsteroidRepository(database)
 
-    private var asteroids = database.getAllNights()
+    // The internal MutableLiveData that stores the status of the most recent request
+    private val _status = MutableLiveData<AsteroidApiStatus>()
+
+    // The external immutable LiveData for the request status
+    val status: LiveData<AsteroidApiStatus>
+        get() = _status
+
 
     init {
-        getAsteroidData()
-        getImageOfTheDay()
-    }
-
-    private fun getAsteroidData() {
-
         viewModelScope.launch {
             _status.value = AsteroidApiStatus.LOADING
             try {
-                val response = AsteroidApi.retrofitService.getAsteroid(
-                    getToday(),
-                    getDaysLater(Constants.DEFAULT_END_DATE_DAYS),
-                    Constants.API_KEY
-                )
-                _response.value = parseAsteroidsJsonResult(JSONObject(response))
+                asteroidRepository.refreshAsteroids()
                 _status.value = AsteroidApiStatus.DONE
-            } catch (e: Exception) {
+                getImageOfTheDay()
+            } catch (e :Exception){
                 _status.value = AsteroidApiStatus.ERROR
-                _response.value = ArrayList()
             }
         }
 
     }
+    val asteroidsList = asteroidRepository.asteroids
 
     private fun getImageOfTheDay() {
         viewModelScope.launch {
-             try {
-                 val image = AsteroidApi.retrofitImageService.getPictureOfDay(Constants.API_KEY)
-                 Log.i("Image", image.title)
-                 _image.value = image
-             } catch (e: Exception) {
-                 _image.value = PictureOfDay("","","")
-             }
+            try {
+                val image = AsteroidApi.retrofitImageService.getPictureOfDay(Constants.API_KEY)
+                _image.value = image
+            } catch (e: Exception) {
+                _image.value = PictureOfDay("","","")
+            }
         }
     }
 
-
-/*    fun getAsteroidsList() : ArrayList<Asteroid>{
-        return parseAsteroidsJsonResult(JSONObject(_response.value!!))
-    }*/
-
-    private fun getToday(): String {
-        val calendar = Calendar.getInstance()
-        val currentTime = calendar.time
-        val dateFormat = SimpleDateFormat(Constants.API_QUERY_DATE_FORMAT, Locale.getDefault())
-        return dateFormat.format(currentTime)
-    }
-
-    private fun getDaysLater(later: Int): String {
-        val calendar = Calendar.getInstance()
-        calendar.add(Calendar.DAY_OF_YEAR, later)
-        val currentTime = calendar.time
-        val dateFormat = SimpleDateFormat(Constants.API_QUERY_DATE_FORMAT, Locale.getDefault())
-        return dateFormat.format(currentTime)
-    }
-
-/*    private fun initializeAsteroid() {
-        // open a thread to do something
-        viewModelScope.launch {
-            //asteroids.value = getAsteroidsFromDatabase()
-        }
-    }*/
 
     fun displayPropertyDetails(asteroid: Asteroid) {
         _navigateToSelectedAsteroid.value = asteroid

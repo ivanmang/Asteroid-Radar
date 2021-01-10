@@ -12,34 +12,33 @@ import com.udacity.asteroidradar.databinding.FragmentMainBinding
 
 class MainFragment : Fragment() {
 
+    private val viewModel: MainViewModel by lazy {
+        val activity = requireNotNull(this.activity) {
+            "You can only access the viewModel after onViewCreated()"
+        }
+        ViewModelProvider(this, MainViewModelFactory(activity.application)).get(MainViewModel::class.java)
+
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         val binding = FragmentMainBinding.inflate(inflater)
 
-        val application = requireNotNull(this.activity).application
-
-        val dataSource = AsteroidDatabase.getInstance(application).asteroidDatabaseDao
-
-        val viewModelFactory = MainViewModelFactory(dataSource, application)
-
-        val mainViewModel =
-            ViewModelProvider(
-                this, viewModelFactory).get(MainViewModel::class.java)
 
         binding.lifecycleOwner = this
 
-        binding.viewModel = mainViewModel
+        binding.viewModel = viewModel
 
         binding.asteroidRecycler.adapter = AsteroidListAdapter(AsteroidListAdapter.OnClickListener {
-            mainViewModel.displayPropertyDetails(it)
+            viewModel.displayPropertyDetails(it)
         })
 
         setHasOptionsMenu(true)
 
-        mainViewModel.navigateToSelectedAsteroid.observe(viewLifecycleOwner, Observer {
+        viewModel.navigateToSelectedAsteroid.observe(viewLifecycleOwner, Observer {
             if ( null != it ) {
                 this.findNavController().navigate(MainFragmentDirections.actionShowDetail(it))
-                mainViewModel.displayPropertyDetailsComplete()
+                viewModel.displayPropertyDetailsComplete()
             }
         })
 
