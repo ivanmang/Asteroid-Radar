@@ -13,12 +13,12 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-
+enum class ApiFilter() { WEEK, DAY, SAVED }
 class AsteroidRepository(private val database: AsteroidDatabase) {
 
-    val asteroids: LiveData<List<Asteroid>> =
-        database.asteroidDatabaseDao.getAllAsteroids()
-
+    var weekAsteroids: LiveData<List<Asteroid>> = database.asteroidDatabaseDao.getAsteroidsFromThisWeek(getToday(), getDaysLater(7))
+    var todayAsteroids: LiveData<List<Asteroid>> = database.asteroidDatabaseDao.getAsteroidToday(getToday())
+    var savedAsteroids: LiveData<List<Asteroid>> = database.asteroidDatabaseDao.getAllAsteroids()
 
     suspend fun refreshAsteroids() {
         withContext(Dispatchers.IO) {
@@ -48,4 +48,12 @@ class AsteroidRepository(private val database: AsteroidDatabase) {
         val dateFormat = SimpleDateFormat(Constants.API_QUERY_DATE_FORMAT, Locale.getDefault())
         return dateFormat.format(currentTime)
     }
+
+/*    fun updateQuery(filter: ApiFilter){
+        when(filter) {
+            ApiFilter.DAY -> asteroids = database.asteroidDatabaseDao.getAsteroidToday(getToday())
+            ApiFilter.SAVED -> asteroids = database.asteroidDatabaseDao.getAllAsteroids()
+            else -> asteroids = database.asteroidDatabaseDao.getAsteroidsFromThisWeek(getToday(), getDaysLater(7))
+        }
+    }*/
 }

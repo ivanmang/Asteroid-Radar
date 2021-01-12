@@ -16,8 +16,6 @@ class AsteroidListAdapter(val onClickListener: OnClickListener)  : ListAdapter<A
         RecyclerView.ViewHolder(binding.root) {
         fun bind(asteroid: Asteroid) {
             binding.asteroid = asteroid
-            // This is important, because it forces the data binding to execute immediately,
-            // which allows the RecyclerView to make the correct view size measurements
             binding.executePendingBindings()
         }
     }

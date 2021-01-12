@@ -11,6 +11,7 @@ import com.udacity.asteroidradar.Constants
 import com.udacity.asteroidradar.PictureOfDay
 import com.udacity.asteroidradar.api.AsteroidApi
 import com.udacity.asteroidradar.database.getDatabase
+import com.udacity.asteroidradar.repository.ApiFilter
 import com.udacity.asteroidradar.repository.AsteroidRepository
 import kotlinx.coroutines.launch
 
@@ -53,7 +54,11 @@ class MainViewModel(application: Application) :
         }
 
     }
-    val asteroidsList = asteroidRepository.asteroids
+    private val _asteroidsList = MutableLiveData<List<Asteroid>>(asteroidRepository.weekAsteroids.value)
+
+    val asteroidsList: LiveData<List<Asteroid>>
+        get() = _asteroidsList
+
 
     private fun getImageOfTheDay() {
         viewModelScope.launch {
@@ -63,6 +68,14 @@ class MainViewModel(application: Application) :
             } catch (e: Exception) {
                 _image.value = PictureOfDay("","","")
             }
+        }
+    }
+
+    fun updateFilter(filter: ApiFilter) {
+        when (filter){
+            ApiFilter.DAY -> _asteroidsList.value = asteroidRepository.todayAsteroids.value
+            ApiFilter.SAVED -> _asteroidsList.value = asteroidRepository.savedAsteroids.value
+            else -> _asteroidsList.value = asteroidRepository.weekAsteroids.value
         }
     }
 
