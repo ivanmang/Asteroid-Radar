@@ -13,7 +13,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-enum class ApiFilter() { WEEK, DAY, SAVED }
 class AsteroidRepository(private val database: AsteroidDatabase) {
 
     var weekAsteroids: LiveData<List<Asteroid>> = database.asteroidDatabaseDao.getAsteroidsFromThisWeek(getToday(), getDaysLater(7))
